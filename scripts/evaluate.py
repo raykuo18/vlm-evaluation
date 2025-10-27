@@ -57,6 +57,7 @@ class EvaluationConfig:
     # Inference Parameters
     device_batch_size: int = 1                      # Device Batch Size set to 1 until LLaVa/HF LLaMa fixes bugs!
     num_workers: int = 2                            # Number of Dataloader Workers (on each process)
+    load_precision: str = "bf16"                   # Precision for model weights (set to fp32 on CPU-only runs)
 
     # Artifact Parameters
     results_dir: Path = Path(                       # Path to results directory (writing predicted output, metrics)
@@ -88,7 +89,14 @@ def evaluate_after_parse(cfg, vlm=None):
     overwatch.info("Initializing VLM =>> Bundling Models, Image Processors, and Tokenizer")
     hf_token = cfg.hf_token.read_text().strip() if isinstance(cfg.hf_token, Path) else os.environ[cfg.hf_token]
     if vlm is None:
-        vlm = load_vlm(cfg.model_family, cfg.model_id, cfg.run_dir, hf_token=hf_token, ocr=cfg.dataset.ocr)
+        vlm = load_vlm(
+            cfg.model_family,
+            cfg.model_id,
+            cfg.run_dir,
+            hf_token=hf_token,
+            ocr=cfg.dataset.ocr,
+            load_precision=cfg.load_precision,
+        )
 
     # Create Task Runner
     overwatch.info(f"Building Evaluation Runner for Dataset `{cfg.dataset.dataset_id}`")

@@ -17,6 +17,10 @@ from vlm_eval.util.interfaces import VLM, ImageProcessor, Tokenizer
 
 
 class PrismaticVLM(VLM):
+    # Keep parity with the training implementation: Transformers looks for this
+    # attribute before enabling custom cache objects during generation.
+    _supports_cache_class = False
+
     def __init__(
         self,
         model_family: str,
