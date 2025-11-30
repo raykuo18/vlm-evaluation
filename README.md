@@ -30,6 +30,12 @@ Finally, make sure to copy your HuggingFace token to `.hf_token`.
 
 Prepare datasets for eval: `scripts/datasets/prepare.py`; model and evaluation dataset configs are defined in `vlm_eval/conf`
 
+> **RefCOCO mirrors:** the legacy UNC-hosted RefCOCO/RefCOCO+/RefCOCOg archives are no longer online. Run
+> `scripts/download_refcoco_from_hf.py --root_dir /path/to/vlm_eval_data` first to mirror the metadata from
+> HuggingFace (defaults to `/lustre/nvwulf/projects/MilderGroup-nvwulf/skuo/vlm_eval_data`). The helper script writes
+> the expected `download/refcoco/*/refs(...)` files so that subsequent invocations of `scripts/datasets/prepare.py`
+> and `download_all.sh` can proceed unchanged.
+
 Entry Point: `scripts/evaluate.py`; model and evaluation dataset configs are defined in `vlm_eval/conf`. This script evaluates
 a given model on the specified dataset
 

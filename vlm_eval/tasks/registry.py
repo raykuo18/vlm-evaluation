@@ -275,7 +275,7 @@ DATASET_REGISTRY: Dict[str, Dict] = {
             #   Each `metadata-*.json` file is a complete, single source of truth for dataset initialization
             "dataset_dir": Path("datasets/pope"),
             "index_files": [
-                Path("datasets/pope/metadata.json"),
+                Path("datasets/pope/metadata-full.json"),
             ],
         }
     },
@@ -307,7 +307,7 @@ DATASET_REGISTRY: Dict[str, Dict] = {
             # Dataset Directory --> stores index / metadata JSON file for full dataset (no slim variant; small set)
             "dataset_dir": Path("datasets/vsr"),
             "index_files": [
-                Path("datasets/vsr/metadata.json"),
+                Path("datasets/vsr/metadata-full.json"),
             ]
         }
     },
@@ -352,7 +352,9 @@ DATASET_REGISTRY: Dict[str, Dict] = {
             # Dataset Directory --> stores index / metadata JSON file for full dataset (no slim variant; small set)
             "dataset_dir": Path("datasets/refcoco"),
             "index_files": [
-                Path("datasets/refcoco/metadata.json"),
+                Path("datasets/refcoco/metadata-full.json"),
+                Path("datasets/refcoco/metadata-slim-1024.json"),
+                Path("datasets/refcoco/metadata-slim-8192.json"),
             ]
         }
     },
@@ -370,11 +372,15 @@ DATASET_REGISTRY: Dict[str, Dict] = {
                 "do_rename": False,
             },
             {
-
                 "name": "OCID-dataset",
                 "extract": True,
                 "extract_type": "directory",
-                "url": "https://data.acin.tuwien.ac.at/index.php/s/g3EkcgcPioolQmJ/download",
+                # Historical share (now offline): https://data.acin.tuwien.ac.at/index.php/s/g3EkcgcPioolQmJ/download
+                # Current TU Wien Research Data record:
+                "url": (
+                    "https://researchdata.tuwien.at/api/records/pcbjd-4wa12/files/"
+                    "OCID-dataset.tar.gz/content"
+                ),
                 "do_rename": True,
             },
         ],
@@ -387,7 +393,7 @@ DATASET_REGISTRY: Dict[str, Dict] = {
             # Dataset Directory --> stores index / metadata JSON file for full dataset (no slim variant; small set)
             "dataset_dir": Path("datasets/ocid-ref"),
             "index_files": [
-                Path("datasets/refcoco/metadata.json"),
+                Path("datasets/ocid-ref/metadata-full.json"),
             ]
         },
     },
@@ -427,7 +433,7 @@ DATASET_REGISTRY: Dict[str, Dict] = {
             #   Each `metadata-*.json` file is a complete, single source of truth for dataset initialization
             "dataset_dir": Path("datasets/tally-qa"),
             "index_files": [
-                Path("datasets/tally-qa/metadata.json"),
+                Path("datasets/tally-qa/metadata-full.json"),
             ],
         },
     },

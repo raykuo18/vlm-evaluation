@@ -274,6 +274,30 @@ class TallyQAScorer:
         with open(self.annotations_file, "r") as f:
             self.annotations = json.load(f)
 
+        example = next(iter(self.full_result_qa_pairs.values()), None)
+        self.num_mc_classes = len(example["mc_probabilities"]) if example else 0
+
+    def _macro_average_precision(self, labels: List[int], probabilities: List[List[float]]) -> float:
+        if not labels or not probabilities:
+            return float("nan")
+
+        y_true = np.asarray(labels)
+        y_score = np.asarray(probabilities)
+
+        ap_values = []
+        for cls in range(self.num_mc_classes):
+            cls_mask = (y_true == cls)
+            if not np.any(cls_mask):
+                continue
+            ap_values.append(
+                average_precision_score(
+                    cls_mask.astype(int),
+                    y_score[:, cls],
+                )
+            )
+
+        return float(np.mean(ap_values)) if ap_values else float("nan")
+
     def score(self, model_id: str) -> Dict[str, float]:
         """Run exact-match based scoring on multiple choice outputs, as well as ROC-AUC and PR-AUC computation."""
         n_correct, n_total = {"simple": 0, "complex": 0}, {"simple": 0, "complex": 0}
@@ -296,15 +320,30 @@ class TallyQAScorer:
         accuracies["final"] = sum(n_correct.values()) / sum(n_total.values())
 
         # Compute AUC-ROC (one-vs-one) and AUC-PR Scores
+        roc_labels = list(range(self.num_mc_classes)) if self.num_mc_classes else None
         auc_roc = {
-            split: roc_auc_score(gt_labels[split], model_probabilities[split], multi_class="ovo") for split in gt_labels
+            split: roc_auc_score(
+                gt_labels[split],
+                model_probabilities[split],
+                multi_class="ovo",
+                labels=roc_labels,
+            )
+            for split in gt_labels
         }
         auc_roc["final"] = roc_auc_score(
-            sum(gt_labels.values(), []), sum(model_probabilities.values(), []), multi_class="ovo"
+            sum(gt_labels.values(), []),
+            sum(model_probabilities.values(), []),
+            multi_class="ovo",
+            labels=roc_labels,
         )
 
-        auc_pr = {split: average_precision_score(gt_labels[split], model_probabilities[split]) for split in gt_labels}
-        auc_pr["final"] = average_precision_score(sum(gt_labels.values(), []), sum(model_probabilities.values(), []))
+        auc_pr = {
+            split: self._macro_average_precision(gt_labels[split], model_probabilities[split]) for split in gt_labels
+        }
+        auc_pr["final"] = self._macro_average_precision(
+            sum(gt_labels.values(), []),
+            sum(model_probabilities.values(), []),
+        )
 
         # Create Metrics Dictionary & Log
         metrics = {
