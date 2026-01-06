@@ -5,7 +5,7 @@ Class definition for wrapping arbitrary "Prismatic VLMs" (including replications
 utilities for VQA, image captioning, and (WIP) conditional likelihood estimation.
 """
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -66,6 +66,27 @@ class PrismaticVLM(VLM):
         # Get Tokenizer and Image Processor
         tokenizer, image_transform = vlm.llm_backbone.tokenizer, vlm.vision_backbone.image_transform
         return vlm, tokenizer, image_transform
+
+    def get_image_transform_info(self) -> Dict[str, Union[str, List[int]]]:
+        vision_backbone = getattr(self.model, "vision_backbone", None)
+        target_resolution = self._resolve_resolution_from_backbone(vision_backbone)
+        return {
+            "policy": getattr(vision_backbone, "image_resize_strategy", "resize-naive"),
+            "target_resolution": target_resolution,
+            "vision_backbone": getattr(vision_backbone, "identifier", None),
+        }
+
+    @staticmethod
+    def _resolve_resolution_from_backbone(backbone) -> List[int]:
+        resolution = getattr(backbone, "default_image_resolution", None)
+        if resolution is not None and len(resolution) == 3:
+            return [int(resolution[1]), int(resolution[2])]
+
+        default_size = getattr(backbone, "default_image_size", None)
+        if default_size is not None:
+            return [int(default_size), int(default_size)]
+
+        return [1, 1]
 
     def set_generate_kwargs(self, generate_kwargs):
         self.generate_kwargs = generate_kwargs

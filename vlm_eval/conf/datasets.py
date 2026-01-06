@@ -26,6 +26,7 @@ class DatasetConfig(ChoiceRegistry):
     annotations_file: Path                  # File with the raw annotations in the "official format" (for eval scripts)
     questions_file: Optional[Path] = None   # File with the raw questions in "official format" (optional)
     ocr: Optional[bool] = False             # Whether to use OCR in question or not (only relevant for Text VQA)
+    results_dataset_id: Optional[str] = None  # Allow scoring to read/write under an alternate results subdir
     # fmt: on
 
 
@@ -222,8 +223,22 @@ class RefCOCOFullDatasetConfig(DatasetConfig):
     expected_examples: int = 26488
 
     root_dir: Path = Path("../../datasets/vlm-evaluation")
-    index_file: Path = Path("datasets/refcoco/metadata-full.json")
-    annotations_file: Path = Path("datasets/refcoco/metadata-full.json")
+    index_file: Path = Path("datasets/refcoco/metadata-full-v2.json")
+    annotations_file: Path = Path("datasets/refcoco/metadata-full-v2.json")
+
+
+@dataclass
+class RefCOCOFullV2DatasetConfig(DatasetConfig):
+    dataset_family: str = "refcoco"
+    dataset_id: str = "refcoco-full-v2"
+    split: str = "val"
+
+    expected_examples: int = 26488
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/refcoco/metadata-full-v2.json")
+    annotations_file: Path = Path("datasets/refcoco/metadata-full-v2.json")
+    results_dataset_id: Optional[str] = "refcoco-full"
 
 
 @dataclass
@@ -250,8 +265,22 @@ class OCIDRefFullDatasetConfig(DatasetConfig):
     expected_examples: int = 18342
 
     root_dir: Path = Path("../../datasets/vlm-evaluation")
-    index_file: Path = Path("datasets/ocid-ref/metadata-full.json")
-    annotations_file: Path = Path("datasets/ocid-ref/metadata-full.json")
+    index_file: Path = Path("datasets/ocid-ref/metadata-full-v2.json")
+    annotations_file: Path = Path("datasets/ocid-ref/metadata-full-v2.json")
+
+
+@dataclass
+class OCIDRefFullV2DatasetConfig(DatasetConfig):
+    dataset_family: str = "ocid-ref"
+    dataset_id: str = "ocid-ref-full-v2"
+    split: str = "val"
+
+    expected_examples: int = 18342
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/ocid-ref/metadata-full-v2.json")
+    annotations_file: Path = Path("datasets/ocid-ref/metadata-full-v2.json")
+    results_dataset_id: Optional[str] = "ocid-ref-full"
 
 
 @dataclass
@@ -399,10 +428,12 @@ class DatasetRegistry(Enum):
 
     # RefCOCO / RefCOCO+ / RefCOCOg (BBox Prediction)
     REFCOCO_FULL = RefCOCOFullDatasetConfig
+    REFCOCO_FULL_V2 = RefCOCOFullV2DatasetConfig
     REFCOCO_SLIM = RefCOCOSlimDatasetConfig
 
     # OCID-Ref - Min/Med/Max Clutter Splits (BBox Prediction)
     OCIDREF_FULL = OCIDRefFullDatasetConfig
+    OCIDREF_FULL_V2 = OCIDRefFullV2DatasetConfig
     OCIDREF_SLIM = OCIDRefSlimDatasetConfig
 
     # TallyQA - Simple & Complex Splits

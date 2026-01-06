@@ -22,6 +22,7 @@ from tqdm import tqdm
 
 from vlm_eval.overwatch import initialize_overwatch
 from vlm_eval.tasks.registry import DATASET_REGISTRY
+from vlm_eval.tasks.harnesses.geometry import normalize_bbox_for_transform
 from vlm_eval.util.interfaces import VLM, ImageProcessor
 from vlm_eval.util.loading.refer import REFER
 
@@ -40,10 +41,10 @@ def box_xywh2xyxy(bbox_xywh: List[float], img_wh: Tuple[int, int], do_normalize:
 
     # Handle Normalization
     if do_normalize:
-        bbox_xyxy = [bbox_xyxy[0] / width, bbox_xyxy[1] / height, bbox_xyxy[2] / width, bbox_xyxy[3] / height]
+        normalized = [bbox_xyxy[0] / width, bbox_xyxy[1] / height, bbox_xyxy[2] / width, bbox_xyxy[3] / height]
+        return [round(coord, 2) for coord in normalized]
 
-    # Return Box Coordinates rounded to 2 decimal places!
-    return [round(coord, 2) for coord in bbox_xyxy]
+    return bbox_xyxy
 
 
 # === Dataset Indexing / Building Utilities ===
@@ -88,7 +89,8 @@ def build_refcoco_indices(root_dir: Path, slim_dataset_sizes: Optional[Tuple[int
             assert (root_dir / img_path).exists(), f"Image `{img_path}` for Ref ID `{ref_id}` does not exist!"
             bbox_xywh, img_size_wh = annotation["bbox"], Image.open(root_dir / img_path).size
 
-            # Compute Normalized Bounding Box
+            # Compute Absolute + Normalized Bounding Boxes
+            bbox_xyxy = box_xywh2xyxy(bbox_xywh, img_size_wh, do_normalize=False)
             normalized_box_xyxy = box_xywh2xyxy(bbox_xywh, img_size_wh, do_normalize=True)
 
             # Iterate through Sentences tied to Ref =>> Add to Index
@@ -104,6 +106,9 @@ def build_refcoco_indices(root_dir: Path, slim_dataset_sizes: Optional[Tuple[int
                     "ref_expression": sent_blob["sent"],
                     "img_path": str(img_path),
                     "bbox": normalized_box_xyxy,
+                    "bbox_xyxy": bbox_xyxy,
+                    "image_width": img_size_wh[0],
+                    "image_height": img_size_wh[1],
 
                     # Additional Metadata
                     "refer_dataset": refer_dataset,
@@ -335,10 +340,68 @@ class RefCOCOScorer:
         self.dataset_id, self.task_results_dir = dataset_id, task_results_dir
         self.annotations_file, self.split = annotations_file, split
         self.full_result_sent_bbox_pairs = full_result_sent_bbox_pairs
+        self.transform_info = self._load_transform_info()
 
         # Load Annotations File to Get Split Information
         with open(self.annotations_file, "r") as f:
             self.annotations = json.load(f)
+        self.dataset_root = self.annotations_file.resolve().parents[2]
+        self._image_size_cache: Dict[str, Tuple[int, int]] = {}
+
+    def _load_transform_info(self) -> Dict[str, str]:
+        transform_file = self.task_results_dir / "image_transform.json"
+        if transform_file.exists():
+            with open(transform_file, "r") as f:
+                return json.load(f)
+
+        raise FileNotFoundError(
+            f"Missing `{transform_file}`. Re-run evaluation so preprocessing metadata can be recorded."
+        )
+
+    def _get_image_size(self, annotation: Dict[str, object]) -> Tuple[int, int]:
+        width = annotation.get("image_width")
+        height = annotation.get("image_height")
+        if width is not None and height is not None:
+            return int(width), int(height)
+
+        img_path = annotation.get("img_path")
+        if isinstance(img_path, str):
+            cached = self._image_size_cache.get(img_path)
+            if cached is not None:
+                return cached
+            full_path = self.dataset_root / img_path
+            with Image.open(full_path) as image:
+                size = image.size
+            self._image_size_cache[img_path] = size
+            annotation["image_width"] = size[0]
+            annotation["image_height"] = size[1]
+            return size
+
+        raise KeyError(
+            "Missing image size metadata (image_width/image_height) and img_path; "
+            "rebuild RefCOCO metadata with build_localization_metadata_v2.py."
+        )
+
+    def _get_bbox_xyxy(self, annotation: Dict[str, object]) -> List[float]:
+        bbox_xyxy = annotation.get("bbox_xyxy")
+        if isinstance(bbox_xyxy, list) and len(bbox_xyxy) == 4:
+            return [float(coord) for coord in bbox_xyxy]
+
+        bbox_norm = annotation.get("bbox")
+        if not isinstance(bbox_norm, list) or len(bbox_norm) != 4:
+            raise KeyError(
+                "Missing bbox_xyxy and bbox metadata; rebuild RefCOCO metadata with build_localization_metadata_v2.py."
+            )
+
+        width, height = self._get_image_size(annotation)
+        bbox_xyxy = [
+            float(bbox_norm[0]) * width,
+            float(bbox_norm[1]) * height,
+            float(bbox_norm[2]) * width,
+            float(bbox_norm[3]) * height,
+        ]
+        annotation["bbox_xyxy"] = bbox_xyxy
+        return bbox_xyxy
 
     def score(self, model_id: str) -> Dict[str, float]:
         """Run Acc @ 0.5 IOU scoring on the predicted normalized boxes [x1 y1 x2 y2]; invalid outputs are failures."""
@@ -346,7 +409,8 @@ class RefCOCOScorer:
             d: {"correct": 0, "invalid": 0, "incorrect": 0, "total": 0} for d in ["RefCOCO", "RefCOCO+", "RefCOCOg"]
         }
         for example_id, example in tqdm(self.full_result_sent_bbox_pairs.items(), "=> Scoring Box Predictions:"):
-            dataset = self.annotations[example_id]["refer_dataset"]
+            annotation = self.annotations[example_id]
+            dataset = annotation["refer_dataset"]
             pred_bbox_xyxy = parse_bbox(example["model_output"])
             if pred_bbox_xyxy is None:
                 ref_scores[dataset]["invalid"] += 1
@@ -354,7 +418,13 @@ class RefCOCOScorer:
                 continue
 
             # Otherwise, compute IOU between boxes!
-            iou = compute_iou(pred_bbox_xyxy, example["ground_truth_bbox"])
+            gt_bbox = normalize_bbox_for_transform(
+                self._get_bbox_xyxy(annotation),
+                self._get_image_size(annotation),
+                self.transform_info,
+            )
+            example["ground_truth_bbox"] = gt_bbox
+            iou = compute_iou(pred_bbox_xyxy, gt_bbox)
             if iou >= 0.5:
                 ref_scores[dataset]["correct"] += 1
                 ref_scores[dataset]["total"] += 1

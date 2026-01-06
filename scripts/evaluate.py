@@ -7,6 +7,7 @@ Run with `accelerate` from repository root (for naive parallelization):
     =>> [Single-GPU] CUDA_VISIBLE_DEVICES={0-7} accelerate launch --num_processes=1 scripts/evaluate.py < args >
     =>> [Multi-GPU]  accelerate launch --num_processes={>1} scripts/evaluate.py < args >
 """
+import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -80,7 +81,9 @@ def evaluate_after_parse(cfg, vlm=None):
     set_seed(cfg.seed)
 
     # Short-Circuit (if results/metrics already exist)
-    task_results_dir = cfg.results_dir / cfg.dataset.dataset_family / cfg.dataset.dataset_id / cfg.model_id
+    dataset_results_id = cfg.dataset.results_dataset_id or cfg.dataset.dataset_id
+    task_results_dir = cfg.results_dir / cfg.dataset.dataset_family / dataset_results_id / cfg.model_id
+    task_results_dir.mkdir(parents=True, exist_ok=True)
     if (task_results_dir / "metrics.json").exists():
         overwatch.info(f"Metrics for `{cfg.dataset.dataset_id}` w/ `{cfg.model_id}` exist =>> exiting!")
         return
@@ -110,9 +113,24 @@ def evaluate_after_parse(cfg, vlm=None):
         image_processor=vlm.image_processor,
     )
 
+    _write_transform_metadata(task_results_dir, vlm, cfg)
+
     # Run Evaluation
     overwatch.info("Starting (Distributed) Evaluation Loop")
     task_runner.evaluate(vlm, cfg.device_batch_size, cfg.num_workers)
+
+
+def _write_transform_metadata(task_results_dir: Path, vlm, cfg: EvaluationConfig) -> None:
+    transform_getter = getattr(vlm, "get_image_transform_info", None)
+    if not callable(transform_getter):
+        return
+
+    transform_info = transform_getter() or {}
+    transform_info.setdefault("model_id", cfg.model_id)
+    transform_info.setdefault("model_family", cfg.model_family)
+
+    with open(task_results_dir / "image_transform.json", "w") as f:
+        json.dump(transform_info, f, indent=2)
 
 
 @draccus.wrap()

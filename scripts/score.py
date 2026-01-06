@@ -61,7 +61,8 @@ def score_after_parse(cfg):
 
     # Short-Circuit (if results/metrics already exist)
     dataset_family, dataset_id = cfg.dataset.dataset_family, cfg.dataset.dataset_id
-    task_results_dir = cfg.results_dir / cfg.dataset.dataset_family / cfg.dataset.dataset_id / cfg.model_id
+    dataset_results_id = cfg.dataset.results_dataset_id or cfg.dataset.dataset_id
+    task_results_dir = cfg.results_dir / cfg.dataset.dataset_family / dataset_results_id / cfg.model_id
     if (metrics_json := task_results_dir / "metrics.json").exists():
         overwatch.info(f"Metrics JSON already exists at `{metrics_json}` =>> Exiting!")
         with open(metrics_json, "r") as f:
@@ -122,7 +123,12 @@ def score_after_parse(cfg):
             full_cfg = yaml.safe_load(f)
 
         # Extract Experiment "Tag" Parameters =>> for Leaderboard Display
-        experiment_tags = {k: full_cfg["model"][k] for k in ["experiment_tag", "config_line_no", "model_split"]}
+        model_cfg = full_cfg.get("model", {}) if isinstance(full_cfg, dict) else {}
+        experiment_tags = {
+            k: model_cfg.get(k)
+            for k in ["experiment_tag", "config_line_no", "model_split"]
+            if k in model_cfg
+        }
     else:
         # Experiment Tags for "Official Models" don't make sense; set to empty
         experiment_tags = {}
