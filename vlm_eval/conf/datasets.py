@@ -213,6 +213,20 @@ class VSRFullDatasetConfig(DatasetConfig):
     annotations_file: Path = Path("datasets/vsr/metadata-full.json")
 
 
+# === VSI-Bench (Video VQA) Datasets ===
+@dataclass
+class VsiBenchFullDatasetConfig(DatasetConfig):
+    dataset_family: str = "vsi-bench"
+    dataset_id: str = "vsi-bench-full"
+    split: str = "test"
+
+    expected_examples: int = 5130
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/vsi-bench/metadata-full.json")
+    annotations_file: Path = Path("datasets/vsi-bench/metadata-full.json")
+
+
 # === RefCOCO / RefCOCO+ / RefCOCOg (BBox Prediction) Datasets =>> Note: Using the "validation" sets *only* ===
 @dataclass
 class RefCOCOFullDatasetConfig(DatasetConfig):
@@ -421,6 +435,9 @@ class DatasetRegistry(Enum):
 
     # VSR (True/False)
     VSR_FULL = VSRFullDatasetConfig
+
+    # VSI-Bench (Video VQA)
+    VSIBENCH_FULL = VsiBenchFullDatasetConfig
 
     # Pope (Yes/No)
     POPE_FULL = PopeFullDatasetConfig

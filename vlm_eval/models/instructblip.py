@@ -94,6 +94,17 @@ class InstructBLIP(VLM):
         text_vqa_prompt_fn = self.get_vqa_chat_prompt_fn(uncertainty_aware=False, ocr_handling=True)
         captioning_prompt_fn = self.get_captioning_prompt_fn()
 
+        def vsi_bench_prompt_fn(question: str, choices: Optional[List[str]] = None) -> str:
+            if choices is None:
+                return vqa_prompt_fn(question)
+            choice_str = "\n".join(
+                [f"{chr(ord('A') + idx)}. {choice}" for idx, choice in enumerate(choices)]
+            )
+            return (
+                f"Question: {question}\nOptions:\n{choice_str}\n"
+                "Answer with the option's letter from the given choices directly."
+            )
+
         return {
             "vqa-v2": vqa_prompt_fn,
             "gqa": vqa_prompt_fn,
@@ -101,6 +112,7 @@ class InstructBLIP(VLM):
             "text-vqa": text_vqa_prompt_fn,
             "vsr": true_false_prompt_fn,
             "pope": vqa_prompt_fn,
+            "vsi-bench": vsi_bench_prompt_fn,
             "refcoco": bbox_refer_prompt_fn,
             "ocid-ref": bbox_refer_prompt_fn,
             # Generic for GUI

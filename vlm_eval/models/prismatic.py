@@ -105,6 +105,11 @@ class PrismaticVLM(VLM):
         tally_qa_prompt_fn = self.get_mc_prompt_fn()
         ai2d_prompt_fn = self.get_mc_prompt_fn()
 
+        def vsi_bench_prompt_fn(question: str, choices: Optional[List[str]] = None) -> str:
+            if choices is None:
+                return vqa_prompt_fn(question)
+            return tally_qa_prompt_fn(question, choices)
+
         return {
             "vqa-v2": vqa_prompt_fn,
             "gqa": vqa_prompt_fn,
@@ -113,6 +118,7 @@ class PrismaticVLM(VLM):
             "vsr": true_false_prompt_fn,
             "pope": vqa_prompt_fn,
             "tally-qa": tally_qa_prompt_fn,
+            "vsi-bench": vsi_bench_prompt_fn,
             "refcoco": bbox_refer_prompt_fn,
             "ocid-ref": bbox_refer_prompt_fn,
             "ai2d": ai2d_prompt_fn,

@@ -312,6 +312,59 @@ DATASET_REGISTRY: Dict[str, Dict] = {
         }
     },
 
+    "vsi-bench": {
+        "dataset_type": EvaluationDatasetType.vqa,
+        "download": [
+            {
+                "name": "test.jsonl",
+                "extract": False,
+                "extract_type": "file",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/test.jsonl",
+                "do_rename": True,
+            },
+            {
+                "name": "pruned_ids.txt",
+                "extract": False,
+                "extract_type": "file",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/pruned_ids.txt",
+                "do_rename": True,
+            },
+            {
+                "name": "arkitscenes",
+                "extract": True,
+                "extract_type": "directory",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/arkitscenes.zip",
+                "do_rename": True,
+            },
+            {
+                "name": "scannet",
+                "extract": True,
+                "extract_type": "directory",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/scannet.zip",
+                "do_rename": True,
+            },
+            {
+                "name": "scannetpp",
+                "extract": True,
+                "extract_type": "directory",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/scannetpp.zip",
+                "do_rename": True,
+            },
+        ],
+        "paths": {
+            "download_dir": Path("download/vsi-bench"),
+            "annotations": Path("download/vsi-bench/test.jsonl"),
+            "pruned_ids": Path("download/vsi-bench/pruned_ids.txt"),
+            "videos": Path("download/vsi-bench"),
+            "dataset_dir": Path("datasets/vsi-bench"),
+            "index_files": [
+                Path("datasets/vsi-bench/metadata-full.json"),
+                Path("datasets/vsi-bench/metadata-slim-1024.json"),
+                Path("datasets/vsi-bench/metadata-slim-2048.json"),
+            ],
+        },
+    },
+
     "refcoco": {
         "dataset_type": EvaluationDatasetType.refer,
         "download": [

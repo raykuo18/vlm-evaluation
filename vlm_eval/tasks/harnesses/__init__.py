@@ -13,6 +13,7 @@ from .vizwiz import VizWizScorer, VizWizTaskRunner
 from .vqav2 import VQAv2Scorer, VQAv2TaskRunner
 from .vsr import VSRScorer, VSRTaskRunner
 from .ai2d import AI2DScorer, AI2DTaskRunner
+from .vsibench import VsiBenchScorer, VsiBenchTaskRunner
 
 
 # === Protocol Definitions ===
@@ -38,6 +39,7 @@ DATASET2RUNNER = {
     "refcoco": RefCOCOTaskRunner,
     "ocid-ref": OCIDRefTaskRunner,
     "ai2d": AI2DTaskRunner,
+    "vsi-bench": VsiBenchTaskRunner,
 }
 
 # === Score Function Dispatch by Dataset Family ===
@@ -52,6 +54,7 @@ DATASET2SCORER = {
     "refcoco": RefCOCOScorer,
     "ocid-ref": OCIDRefScorer,
     "ai2d": AI2DScorer,
+    "vsi-bench": VsiBenchScorer,
 }
 
 
