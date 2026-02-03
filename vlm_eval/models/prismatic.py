@@ -62,6 +62,11 @@ class PrismaticVLM(VLM):
         # Get Fully Initialized VLM Instance (+ handle `load_precision`)
         vlm = load(load_from, hf_token=self.hf_token)
         vlm.to(self.distributed_state.device, dtype=self.dtype)
+        if self.dtype in (torch.bfloat16, torch.float16):
+            # SyncBatchNorm kernels expect FP32 params/buffers; keep them in FP32 under mixed precision eval.
+            for module in vlm.modules():
+                if isinstance(module, nn.SyncBatchNorm):
+                    module.float()
 
         # Get Tokenizer and Image Processor
         tokenizer, image_transform = vlm.llm_backbone.tokenizer, vlm.vision_backbone.image_transform
