@@ -213,6 +213,34 @@ class VSRFullDatasetConfig(DatasetConfig):
     annotations_file: Path = Path("datasets/vsr/metadata-full.json")
 
 
+# === Winoground (Contrast Captioning) Dataset ===
+@dataclass
+class WinogroundFullDatasetConfig(DatasetConfig):
+    dataset_family: str = "winoground"
+    dataset_id: str = "winoground-full"
+    split: str = "test"
+
+    expected_examples: int = 400
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/winoground/metadata-full.json")
+    annotations_file: Path = Path("datasets/winoground/metadata-full.json")
+
+
+# === VSI Bench (Video VQA) Datasets ===
+@dataclass
+class VSIFullDatasetConfig(DatasetConfig):
+    dataset_family: str = "vsi"
+    dataset_id: str = "vsi-full"
+    split: str = "test"
+
+    expected_examples: int = 5130
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/vsi/metadata-full.json")
+    annotations_file: Path = Path("datasets/vsi/metadata-full.json")
+
+
 # === RefCOCO / RefCOCO+ / RefCOCOg (BBox Prediction) Datasets =>> Note: Using the "validation" sets *only* ===
 @dataclass
 class RefCOCOFullDatasetConfig(DatasetConfig):
@@ -421,6 +449,12 @@ class DatasetRegistry(Enum):
 
     # VSR (True/False)
     VSR_FULL = VSRFullDatasetConfig
+
+    # Winoground (Contrast)
+    WINOGROUND_FULL = WinogroundFullDatasetConfig
+
+    # VSI Bench (Full)
+    VSI_FULL = VSIFullDatasetConfig
 
     # Pope (Yes/No)
     POPE_FULL = PopeFullDatasetConfig

@@ -181,6 +181,7 @@ class LLaVa(VLM):
         captioning_prompt_fn = self.get_captioning_prompt_fn()
         tally_qa_prompt_fn = self.get_mc_prompt_fn()
         ai2d_prompt_fn = self.get_mc_prompt_fn()
+        vsi_prompt_fn = self.get_vsi_prompt_fn()
 
         return {
             "vqa-v2": vqa_prompt_fn,
@@ -193,6 +194,8 @@ class LLaVa(VLM):
             "refcoco": bbox_refer_prompt_fn,
             "ocid-ref": bbox_refer_prompt_fn,
             "ai2d": ai2d_prompt_fn,
+            "winoground": contrast_caption_prompt_fn,
+            "vsi": vsi_prompt_fn,
             # Generic for GUI
             "captioning": captioning_prompt_fn,
             "bbox_pred": bbox_refer_prompt_fn,
@@ -329,6 +332,18 @@ class LLaVa(VLM):
             return prompt_template.format(question=question, choice_str=choice_str)
 
         return llava_mc_prompt_fn
+
+    def get_vsi_prompt_fn(self) -> Callable[[str, Optional[List[str]]], str]:
+        """Prompt helper for VSI: MC formatting when choices are provided, else VQA-style."""
+        vqa_prompt_fn = self.get_vqa_chat_prompt_fn(uncertainty_aware=False)
+        mc_prompt_fn = self.get_mc_prompt_fn()
+
+        def vsi_prompt_fn(question: str, choices: Optional[List[str]] = None) -> str:
+            if choices:
+                return mc_prompt_fn(question, choices)
+            return vqa_prompt_fn(question)
+
+        return vsi_prompt_fn
 
     def get_bbox_refer_chat_prompt_fn(self) -> Callable[[str], str]:
         """Generates the full reference prompt for a referring expression localization task."""

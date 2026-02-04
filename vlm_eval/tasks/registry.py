@@ -312,6 +312,89 @@ DATASET_REGISTRY: Dict[str, Dict] = {
         }
     },
 
+    "winoground": {
+        "dataset_type": EvaluationDatasetType.contrast,
+        "download": [
+            {
+                "name": "examples.jsonl",
+                "extract": False,
+                "extract_type": "file",
+                "url": "https://huggingface.co/datasets/facebook/winoground/resolve/main/data/examples.jsonl",
+                "do_rename": True,
+                "hf_download": True,
+            },
+            {
+                "name": "images",
+                "extract": True,
+                "extract_type": "directory",
+                "url": "https://huggingface.co/datasets/facebook/winoground/resolve/main/data/images.zip",
+                "do_rename": True,
+                "hf_download": True,
+            },
+        ],
+        "paths": {
+            "download_dir": Path("download/winoground"),
+            "examples": Path("download/winoground/examples.jsonl"),
+            "images": Path("download/winoground/images"),
+            "dataset_dir": Path("datasets/winoground"),
+            "index_files": [
+                Path("datasets/winoground/metadata-full.json"),
+            ],
+        },
+    },
+
+    "vsi": {
+        "dataset_type": EvaluationDatasetType.vqa,
+        "download": [
+            {
+                "name": "test.jsonl",
+                "extract": False,
+                "extract_type": "file",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/test.jsonl",
+                "do_rename": True,
+            },
+            {
+                "name": "pruned_ids.txt",
+                "extract": False,
+                "extract_type": "file",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/pruned_ids.txt",
+                "do_rename": True,
+            },
+            {
+                "name": "arkitscenes",
+                "extract": True,
+                "extract_type": "directory",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/arkitscenes.zip",
+                "do_rename": True,
+            },
+            {
+                "name": "scannet",
+                "extract": True,
+                "extract_type": "directory",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/scannet.zip",
+                "do_rename": True,
+            },
+            {
+                "name": "scannetpp",
+                "extract": True,
+                "extract_type": "directory",
+                "url": "https://huggingface.co/datasets/nyu-visionx/VSI-Bench/resolve/main/scannetpp.zip",
+                "do_rename": True,
+            },
+        ],
+        "paths": {
+            "download_dir": Path("download/vsi"),
+            "questions": Path("download/vsi/test.jsonl"),
+            "pruned_ids": Path("download/vsi/pruned_ids.txt"),
+            "videos": Path("download/vsi"),
+            "dataset_dir": Path("datasets/vsi"),
+            "index_files": [
+                Path("datasets/vsi/metadata-full.json"),
+                Path("datasets/vsi/metadata-debiased.json"),
+            ],
+        },
+    },
+
     "refcoco": {
         "dataset_type": EvaluationDatasetType.refer,
         "download": [
