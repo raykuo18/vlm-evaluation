@@ -110,6 +110,10 @@ class PrismaticVLM(VLM):
         tally_qa_prompt_fn = self.get_mc_prompt_fn()
         ai2d_prompt_fn = self.get_mc_prompt_fn()
         vsi_prompt_fn = self.get_vsi_prompt_fn()
+        # CV-Bench routes through the SAME multiple-choice builder as AI2D/TallyQA: the "A. ..."
+        # rendering plus the trailing "Answer with the option's letter..." string is byte-identical
+        # to the A-OKVQA format in the LLaVA-1.5 mixture, so it needs no new trained format.
+        cvbench_prompt_fn = self.get_mc_prompt_fn()
 
         return {
             "vqa-v2": vqa_prompt_fn,
@@ -124,6 +128,10 @@ class PrismaticVLM(VLM):
             "ai2d": ai2d_prompt_fn,
             "winoground": contrast_caption_prompt_fn,
             "vsi": vsi_prompt_fn,
+            "cv-bench": cvbench_prompt_fn,
+            # Flickr30k Entities is phrase grounding: the SAME bbox prompt as RefCOCO/OCID-Ref, with
+            # the entity phrase in place of the referring expression.
+            "flickr-entities": bbox_refer_prompt_fn,
             # Generic for GUI
             "captioning": captioning_prompt_fn,
             "bbox_pred": bbox_refer_prompt_fn,

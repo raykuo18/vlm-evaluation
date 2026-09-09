@@ -15,6 +15,8 @@ from .vsr import VSRScorer, VSRTaskRunner
 from .ai2d import AI2DScorer, AI2DTaskRunner
 from .winoground import WinogroundScorer, WinogroundTaskRunner
 from .vsi import VSIScorer, VSITaskRunner
+from .cvbench import CVBenchScorer, CVBenchTaskRunner
+from .flickr_entities import FlickrEntitiesScorer, FlickrEntitiesTaskRunner
 
 
 # === Protocol Definitions ===
@@ -42,6 +44,8 @@ DATASET2RUNNER = {
     "ai2d": AI2DTaskRunner,
     "winoground": WinogroundTaskRunner,
     "vsi": VSITaskRunner,
+    "cv-bench": CVBenchTaskRunner,
+    "flickr-entities": FlickrEntitiesTaskRunner,
 }
 
 # === Score Function Dispatch by Dataset Family ===
@@ -58,6 +62,8 @@ DATASET2SCORER = {
     "ai2d": AI2DScorer,
     "winoground": WinogroundScorer,
     "vsi": VSIScorer,
+    "cv-bench": CVBenchScorer,
+    "flickr-entities": FlickrEntitiesScorer,
 }
 
 

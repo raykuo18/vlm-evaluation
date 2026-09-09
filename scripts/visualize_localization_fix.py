@@ -118,7 +118,11 @@ def visualize_example(
     bbox_xyxy = entry["bbox_xyxy"]
     image_wh = (entry["image_width"], entry["image_height"])
 
-    naive_norm = normalize_bbox_for_transform(bbox_xyxy, image_wh, {"policy": "resize-naive"})
+    # "Before" = the raw-image normalization the ORIGINAL upstream scorer used. Call the private
+    # helper directly: normalize_bbox_for_transform is now unconditional (centered pad-to-square for
+    # every policy), so passing {"policy": "resize-naive"} would return the fixed box, not the buggy
+    # one, and the before/after panels would be identical.
+    naive_norm = geometry_module._normalize_resize_naive(bbox_xyxy, image_wh)
     fixed_norm = normalize_bbox_for_transform(bbox_xyxy, image_wh, transform_info)
 
     naive_px = _norm_to_pixels(naive_norm, target_hw)

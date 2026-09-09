@@ -21,6 +21,11 @@ from vlm_eval.tasks.harnesses.vsr import VSRIndexDataset, build_vsr_indices
 from vlm_eval.tasks.harnesses.ai2d import AI2DIndexDataset, build_ai2d_indices
 from vlm_eval.tasks.harnesses.winoground import WinogroundIndexDataset, build_winoground_indices
 from vlm_eval.tasks.harnesses.vsi import VSIIndexDataset, build_vsi_indices
+from vlm_eval.tasks.harnesses.cvbench import CVBenchIndexDataset, build_cvbench_indices
+from vlm_eval.tasks.harnesses.flickr_entities import (
+    FlickrEntitiesIndexDataset,
+    build_flickr_entities_indices,
+)
 
 # Initialize Overwatch =>> Wraps `logging.Logger`
 overwatch = initialize_overwatch(__name__)
@@ -43,6 +48,11 @@ BUILDER_DISPATCH: Dict[str, Dict[str, Callable]] = {
     "ai2d": {"build_indices": build_ai2d_indices, "get_index_datasets": AI2DIndexDataset},
     "winoground": {"build_indices": build_winoground_indices, "get_index_datasets": WinogroundIndexDataset},
     "vsi": {"build_indices": build_vsi_indices, "get_index_datasets": VSIIndexDataset},
+    "cv-bench": {"build_indices": build_cvbench_indices, "get_index_datasets": CVBenchIndexDataset},
+    "flickr-entities": {
+        "build_indices": build_flickr_entities_indices,
+        "get_index_datasets": FlickrEntitiesIndexDataset,
+    },
 
     # fmt: on
 }

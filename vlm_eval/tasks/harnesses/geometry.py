@@ -70,17 +70,32 @@ def _normalize_resize_crop(
 def normalize_bbox_for_transform(
     bbox_xyxy: Sequence[float], image_wh: Tuple[int, int], transform_info: Dict[str, Sequence[int]] | None
 ) -> List[float]:
-    """Project an absolute COCO/OCID box into the VLM's normalized coordinate frame."""
-    if transform_info is None:
-        transform_info = {}
+    """Project an absolute COCO/OCID box into the coordinate frame the MODEL EMITS.
 
-    policy = transform_info.get("policy", "resize-naive").lower()
+    That frame is ALWAYS the centered pad-to-square ("letterbox") frame, for every config, and it is
+    deliberately independent of `transform_info["policy"]`. `transform_info` is accepted (and ignored)
+    only to keep the call signature stable for the two scorers.
 
-    if policy == "letterbox":
-        return _normalize_letterbox(bbox_xyxy, image_wh)
+    WHY (verified 2026-09-08, see docs/reference/GROUNDING_COORDINATE_FRAME.md):
 
-    if policy == "resize-crop":
-        return _normalize_resize_crop(bbox_xyxy, image_wh, transform_info)
+    A VLM's box coordinates are learned from the TEXT of the instruction-tuning mixture, not from how
+    its vision backbone happens to pad pixels. In `llava_v1_5_mix665k.json` (RefCOCO 48K + VG 86K) the
+    box strings are normalized in the centered pad-to-square frame: across 33,521 sampled boxes the
+    observed y-range matches the letterbox band exactly in every aspect-ratio bucket and never reaches
+    0.0/1.0 (640x480 -> [0.12, 0.88] vs the predicted [0.125, 0.875]; 640x360 -> [0.22, 0.78] vs
+    [0.219, 0.781]). `prismatic/preprocessing/datasets/datasets.py` never touches those strings -- they
+    are opaque text -- so the convention is identical for EVERY config regardless of backbone.
 
-    # Default to naive resize semantics
-    return _normalize_resize_naive(bbox_xyxy, image_wh)
+    Keying the projection off the pixel policy (as this function did until 2026-09-08) therefore
+    mis-scored every non-`letterbox` config. Empirically, on real predictions the centered frame beat
+    every alternative for all 8 policy families tested, and the margin GROWS with model quality
+    (RefCOCO: +3.4 pts at 5-10% accuracy, +13.2 pts at 40%+; 0 of 429 rows negative). The blind
+    (no-vision) baseline -- whose outputs are a pure language prior -- also scores highest under the
+    centered frame (9.74% vs 7.32% naive), which is a direct read-out of the training convention.
+
+    Note the corollary: a backbone that pads at the CORNER (ViTDet's `PadToSquare`) or onto a
+    NON-SQUARE canvas (vmamba-detection, 800x1333) still emits centered-frame coordinates -- the pixel
+    padding is a fixed affine relation the model learns through, not the output convention.
+    """
+    del transform_info  # intentionally unused; see docstring
+    return _normalize_letterbox(bbox_xyxy, image_wh)

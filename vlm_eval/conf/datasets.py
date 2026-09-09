@@ -241,6 +241,53 @@ class VSIFullDatasetConfig(DatasetConfig):
     annotations_file: Path = Path("datasets/vsi/metadata-full.json")
 
 
+# === CV-Bench (Cambrian-1) =>> 2,638 vision-centric multiple-choice items, 2D + 3D ===
+@dataclass
+class CVBenchFullDatasetConfig(DatasetConfig):
+    dataset_family: str = "cv-bench"
+    dataset_id: str = "cv-bench-full"
+    split: str = "test"
+
+    # Hard-asserted by scripts/score.py after merging the per-rank dumps.
+    #   2D Count 788 + 2D Relation 650 + 3D Depth 600 + 3D Distance 600 = 2638
+    expected_examples: int = 2638
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/cv-bench/metadata-full.json")
+    annotations_file: Path = Path("datasets/cv-bench/metadata-full.json")
+
+# === Flickr30k Entities (Phrase Grounding) =>> the NON-COCO grounding twin of RefCOCO ===
+#
+# Counts are MEASURED from the staged annotations, not estimated: scripts/score.py hard-asserts
+# `expected_examples` against the merged per-rank results, so a guess here fails the whole eval.
+# Phrases with coreference chain id 0 (`notvisual`) and chains flagged `scene`/`nobndbox` are excluded
+# by the stager -- there is no box to predict -- which is why these are well under the ~14.5k that a
+# naive "phrases per image" count suggests.
+@dataclass
+class FlickrEntitiesTestDatasetConfig(DatasetConfig):
+    dataset_family: str = "flickr-entities"
+    dataset_id: str = "flickr-entities-test"
+    split: str = "test"
+
+    expected_examples: int = 11430          # 1,000 test images
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/flickr-entities/metadata-full-test.json")
+    annotations_file: Path = Path("datasets/flickr-entities/metadata-full-test.json")
+
+
+@dataclass
+class FlickrEntitiesValDatasetConfig(DatasetConfig):
+    dataset_family: str = "flickr-entities"
+    dataset_id: str = "flickr-entities-val"
+    split: str = "val"
+
+    expected_examples: int = 11626          # 1,000 val images
+
+    root_dir: Path = Path("../../datasets/vlm-evaluation")
+    index_file: Path = Path("datasets/flickr-entities/metadata-full-val.json")
+    annotations_file: Path = Path("datasets/flickr-entities/metadata-full-val.json")
+
 # === RefCOCO / RefCOCO+ / RefCOCOg (BBox Prediction) Datasets =>> Note: Using the "validation" sets *only* ===
 @dataclass
 class RefCOCOFullDatasetConfig(DatasetConfig):
@@ -474,6 +521,13 @@ class DatasetRegistry(Enum):
     TALLYQA_FULL = TallyQAFullDatasetConfig
     TALLYQA_SUBSAMPLED = TallyQASubsampledDatasetConfig
     TALLYQA_SLIM = TallyQASlimDatasetConfig
+
+    # CV-Bench (Multiple Choice, vision-centric)
+    CVBENCH_FULL = CVBenchFullDatasetConfig
+
+    # Flickr30k Entities (Phrase Grounding, non-COCO)
+    FLICKR_ENTITIES_TEST = FlickrEntitiesTestDatasetConfig
+    FLICKR_ENTITIES_VAL = FlickrEntitiesValDatasetConfig
 
     # AI2D
     AI2D_FULL = AI2DFullDatasetConfig

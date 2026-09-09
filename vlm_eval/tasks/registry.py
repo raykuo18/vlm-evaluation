@@ -312,6 +312,44 @@ DATASET_REGISTRY: Dict[str, Dict] = {
         }
     },
 
+    "cv-bench": {
+        "dataset_type": EvaluationDatasetType.multiple_choice,
+        # No `download` entries: CV-Bench ships as two parquet shards with the images EMBEDDED, and
+        # `download.py` only understands zip/tar/gz URLs. Stage it with the dedicated mirror script
+        # (the `download_refcoco_from_hf.py` precedent):
+        #     sbatch exp_scripts/evaluation/stage_cvbench.slurm
+        "download": [],
+        "expected_examples": 2638,
+        "paths": {
+            "download_dir": Path("download/cv-bench"),
+            "examples": Path("download/cv-bench/examples.jsonl"),
+            "images": Path("download/cv-bench"),          # `filename` fields are relative to this
+            "dataset_dir": Path("datasets/cv-bench"),
+            "index_files": [
+                Path("datasets/cv-bench/metadata-full.json"),
+            ],
+        },
+    },
+
+    "flickr-entities": {
+        "dataset_type": EvaluationDatasetType.refer,
+        # Two sources that `download.py` cannot express as one URL each (a GitHub zip plus a 4.4 GB
+        # HF image archive), so staging lives in its own mirror script:
+        #     sbatch exp_scripts/evaluation/stage_flickr_entities.slurm
+        "download": [],
+        "splits": ("test", "val"),
+        "paths": {
+            "download_dir": Path("download/flickr-entities"),
+            "annotations": Path("download/flickr-entities/annotations"),
+            "images": Path("download/flickr-entities/flickr30k-images"),
+            "dataset_dir": Path("datasets/flickr-entities"),
+            "index_files": [
+                Path("datasets/flickr-entities/metadata-full-test.json"),
+                Path("datasets/flickr-entities/metadata-full-val.json"),
+            ],
+        },
+    },
+
     "winoground": {
         "dataset_type": EvaluationDatasetType.contrast,
         "download": [
