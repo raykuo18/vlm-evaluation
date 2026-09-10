@@ -19,8 +19,12 @@ from the same predictions, and neither is free:
   * `accuracy__Flickr-merged`  -- IoU against the UNION of the chain's boxes. This is what MDETR and
     KOSMOS-2 report, so it is the comparable number, and it is the headline here. It is also
     unforgiving for scattered chains, where the union covers mostly background.
-  * `accuracy__Flickr-any`     -- correct if IoU >= 0.5 with ANY box in the chain. More generous, and
-    arguably the fairer read of "did it find the thing", but not comparable to published numbers.
+  * `accuracy__Flickr-any`     -- correct if IoU >= 0.5 with any INDIVIDUAL box of the chain OR with
+    their union. Including the union is what makes this a strict superset of the merged protocol, so
+    `any >= merged` always holds and the GAP between them is the quantity of interest: how often the
+    model grounds a single instance instead of the whole group. (Individual boxes alone are not a
+    superset -- a prediction covering a scattered group matches the union and no single box.)
+    More generous than merged, and not comparable to published numbers.
 
 Single-box phrases (the large majority) score identically under both, so the gap between the two is a
 direct read-out of how much the multi-box convention is doing.
@@ -286,12 +290,19 @@ class FlickrEntitiesScorer:
             if compute_iou(pred, merged_gt) >= 0.5:
                 n_merged += 1
 
+            # The lenient protocol must be a SUPERSET of the merged one, or the pair cannot be read as
+            # "how much does the model lose by grounding one instance instead of the group".
+            # Testing only the individual boxes is NOT a superset: a prediction that correctly covers a
+            # scattered group matches the union but has low IoU with every single box, so it scored
+            # merged=hit / any=miss. Measured on one run: 359 such cases, ALL multi-box. So the
+            # candidate set is the individual boxes PLUS the union.
             boxes = ann.get("all_boxes_xyxy") or [ann["bbox_xyxy"]]
             if len(boxes) > 1:
                 n_multi += 1
+            candidates = list(boxes) + [ann["bbox_xyxy"]]
             if any(
                 compute_iou(pred, normalize_bbox_for_transform(b, image_wh, self.transform_info)) >= 0.5
-                for b in boxes
+                for b in candidates
             ):
                 n_any += 1
 

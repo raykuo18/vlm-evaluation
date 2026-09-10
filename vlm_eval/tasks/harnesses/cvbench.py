@@ -336,11 +336,24 @@ class CVBenchScorer:
         )
         accuracies["accuracy__CVBench-micro"] = n_correct / n_total if n_total else 0.0
 
-        # Official CV-Bench average: the two 2D sources are averaged with each other first, then 2D is
-        # averaged against 3D -- so ADE20K (633 items) counts as much as COCO (805), and the 1,438 2D
-        # items count as much as the 1,200 3D ones. Plain micro-accuracy is NOT this number.
+        # The Cambrian-1 reporting scheme, reproduced exactly so our numbers are comparable to their
+        # Table 1. It is UNWEIGHTED at both levels:
+        #
+        #   CV-Bench_2D  = (acc_ADE20K + acc_COCO) / 2     <- source-level, NOT item-weighted, so
+        #                                                     ADE20K (633) counts as much as COCO (805)
+        #   CV-Bench_3D  = acc_Omni3D                       <- all 1,200 3D items are Omni3D; equal
+        #                                                     Depth/Distance counts (600/600) make the
+        #                                                     per-task mean identical, so no ambiguity
+        #   CV-Bench     = (CV-Bench_2D + CV-Bench_3D) / 2 <- so 1,438 2D items count as much as 1,200 3D
+        #
+        # Plain micro-accuracy over all 2,638 items is NOT this number; it is reported separately as
+        # `accuracy__CVBench-micro` and should not be compared against published CV-Bench figures.
         acc_2d = [correct_source[s] / total_source[s] for s in SOURCE_2D if total_source.get(s)]
         acc_3d = [correct_source[s] / total_source[s] for s in SOURCE_3D if total_source.get(s)]
+        if acc_2d:
+            accuracies["accuracy__CVBench-2D"] = sum(acc_2d) / len(acc_2d)
+        if acc_3d:
+            accuracies["accuracy__CVBench-3D"] = sum(acc_3d) / len(acc_3d)
         if acc_2d and acc_3d:
             accuracies["accuracy__CVBench-final"] = (sum(acc_2d) / len(acc_2d) + sum(acc_3d) / len(acc_3d)) / 2
 
