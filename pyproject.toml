@@ -32,20 +32,33 @@ classifiers = [
 dependencies = [
     "accelerate",
     "ascii_magic",
-    "draccus @ git+https://github.com/dlwh/draccus",
+    # Git dependencies are pinned to the full commit installed in the Mamba-MLLM eval envs
+    # (superproject scripts/env/locks/vlm-eval/pip-freeze.txt). draccus moved: the old
+    # github.com/dlwh/draccus URL now 301-redirects to marin-community/draccus (commit is on main,
+    # version 0.11.5).
+    "draccus @ git+https://github.com/marin-community/draccus@13dd58f0c67002add8a188d85ba0e74661039078",
     "gradio==3.35.2",
     "gradio_client==0.2.9",
     "pydantic==1.10.14",
     "jsonlines",
     "jinja2==3.0.3",
-    "llava @ git+https://github.com/suraj-nair-tri/LLaVA",
+    "llava @ git+https://github.com/suraj-nair-tri/LLaVA@6d739ad8793bba97b51051089a295c42b400ff8b",
     "mosaicml-streaming",
     "openai",
-    "prismatic @ git+https://github.com/TRI-ML/prismatic-vlms",
+    # `prismatic` is intentionally NOT listed. It is provided by the Mamba-MLLM superproject's own
+    # editable install (`pip install -e <superproject>`), which vlm_eval/models/prismatic.py and
+    # scripts/eval_runner.py import. Listing TRI-ML/prismatic-vlms here would install the upstream
+    # package over it.
     "pycocotools",
     "rich",
     "scikit-image",
-    "salesforce-lavis @ git+https://github.com/siddk/LAVIS",
+    # `salesforce-lavis` removed: it came from github.com/siddk/LAVIS, which has been deleted (the
+    # installed commit 074a6ff28f8bac2f2d188d15634c624da83a7a03 is no longer fetchable), and no code
+    # in this repo imports `lavis` (vlm_eval/util/preprocessing.py only cites it in a comment;
+    # the instruct-blip family uses transformers' InstructBlip* classes). If a future code path does
+    # need it, the only surviving source is upstream salesforce/LAVIS on PyPI (`salesforce-lavis`),
+    # which is NOT the same code as the siddk fork and pins transformers<4.27 and timm==0.4.12, so it
+    # cannot be installed alongside transformers==4.49.0 below. Do not add it back as a dependency.
     "torch>=2.1.0",
     "torchvision",
     "torchaudio",
